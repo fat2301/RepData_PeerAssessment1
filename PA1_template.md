@@ -1,25 +1,38 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
----
+# Reproducible Research: Peer Assessment 1
 
 
 ##Initial Setup.  
 
 Load default options for code chunks. 
 
-```{r setoptions, echo=TRUE}
+
+```r
 library(knitr)
 opts_chunk$set(echo=TRUE)
 ```
 
 Load data into R. This assumes that the activity.csv file is located in same directory 
 
-```{r LoadData_and_libraries}
+
+```r
 activity<- read.csv("./activity.csv", )
 library(dplyr)
+```
+
+```
+## 
+## Attaching package: 'dplyr'
+## 
+## The following objects are masked from 'package:stats':
+## 
+##     filter, lag
+## 
+## The following objects are masked from 'package:base':
+## 
+##     intersect, setdiff, setequal, union
+```
+
+```r
 library(xtable)
 library(lattice)
 ```
@@ -35,8 +48,8 @@ Get the total number of steps per day by :
   3. summarize data.  
   4. Store results in totalsteps data frame.  
 
-```{r totalsteps}
 
+```r
 totalsteps<- select(activity[!is.na(activity$steps),], -interval) %>% group_by(date) %>%   summarize_each(funs(sum))
 ```
 
@@ -45,26 +58,39 @@ totalsteps<- select(activity[!is.na(activity$steps),], -interval) %>% group_by(d
 
 Here's a histogram of the total number of steps each day.
 
-```{r mean}
+
+```r
 hist(totalsteps$steps, col="green", xlab="Total Steps per day", 
      main="Histogram of total number of steps each day")
 ```
+
+![](PA1_template_files/figure-html/mean-1.png) 
 
 
 - **Calculate and report the mean and median of the total number of steps taken per day.   **
 
 Compute for the mean of the total number of steps taken per day.
 
-```{r meantotal}
+
+```r
 meantotal <- mean(totalsteps$steps)
 print(meantotal)
 ```
 
+```
+## [1] 10766.19
+```
+
 Compute for the median of the total number of steps taken per day.
 
-```{r mediantotal}
+
+```r
 mediantotal<- median(totalsteps$steps)
 print(mediantotal)
+```
+
+```
+## [1] 10765
 ```
 
 
@@ -75,26 +101,36 @@ print(mediantotal)
 
 Prepare data per time interval averaged across all days, then generate time series plot. 
 
-```{r timeseries}
+
+```r
 avgstepsperinterval <- select(activity[!is.na(activity$steps),],-date) %>% group_by(interval) %>%   summarize_each(funs(mean))
 
 plot(avgstepsperinterval$interval, avgstepsperinterval$steps, type="l", main="Avg number of steps per Interval", xlab="Interval", ylab="Avg number of steps across all days", xlim=c(0,2400 ))
-
 ```
+
+![](PA1_template_files/figure-html/timeseries-1.png) 
 
 - ** Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps? **  
 
 Get the interval of the observation with the highest average steps.
 
-```{r maxsteps}
 
+```r
 maxstep<- max(avgstepsperinterval$steps)
 intervalofmax<- avgstepsperinterval[avgstepsperinterval$steps==maxstep,1]
 
 print (intervalofmax)
 ```
 
-Above shows the maximum value of average step is `r maxstep` which is measured at the interval `r intervalofmax`. 
+```
+## Source: local data frame [1 x 1]
+## 
+##   interval
+##      (int)
+## 1      835
+```
+
+Above shows the maximum value of average step is 206.1698113 which is measured at the interval 835. 
 
 
 ## Imputing missing values
@@ -105,8 +141,13 @@ Above shows the maximum value of average step is `r maxstep` which is measured a
 
 Compute the total number of rows where steps is NA. 
 
-```{r numberofNA}
+
+```r
 sum(is.na(activity$steps))
+```
+
+```
+## [1] 2304
 ```
 
 
@@ -121,8 +162,8 @@ Below code does the following:
 3. For observations with NA values in "steps" variable, assign the average value.  
 4. Drop the average steps column to make the dataset equal to the original, but with missing data filled in.  
 
-```{r fillintheNA}
 
+```r
 activitynew<- merge(activity, avgstepsperinterval, by.x = "interval", by.y="interval" )
 names(activitynew)[2] <- "steps"
 names(activitynew)[4] <- "avgsteps"
@@ -131,15 +172,18 @@ activitynew[is.na(activitynew$steps),2] <- activitynew[is.na(activitynew$steps),
 activitynew <- select(activitynew, -avgsteps)
 
 sum(is.na(activitynew$steps))
+```
 
+```
+## [1] 0
 ```
 
 - **Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?**
 
 First created a new dataset totalstepsnew to get total steps per day. Then generate histograms of original dataset and the new dataset with imputed missing data. 
 
-```{r newmean}
 
+```r
 totalstepsnew<- select(activitynew[!is.na(activitynew$steps),], -interval) %>% group_by(date) %>%   summarize_each(funs(sum))
 
 par(mfrow=c(1,2))
@@ -151,6 +195,8 @@ hist(totalstepsnew$steps, col="blue", xlab="Total Steps per day",
      main="Imputed")
 ```
 
+![](PA1_template_files/figure-html/newmean-1.png) 
+
   
 **Impact on the histogram**: the middle section of the histogram shows a noticeable increase.  
 This is expected as we imputed the days with NA values with "average day" numbers.  
@@ -161,7 +207,8 @@ Code chunk below does the following:
 2. Prepares an Xtable to present results.  
 3. Presents results of comparison between the original dataset and new imputed dataset.  
 
-```{r meanandmediancomparison, results="asis"}
+
+```r
 meantotalnew <- mean(totalstepsnew$steps)
 mediantotalnew<- median(totalstepsnew$steps)
 
@@ -178,6 +225,14 @@ x<- rbind(x,y)
 xt<- xtable(x)
 print(xt, type="html")
 ```
+
+<!-- html table generated in R 3.2.2 by xtable 1.7-4 package -->
+<!-- Sun Oct 18 18:01:45 2015 -->
+<table border=1>
+<tr> <th>  </th> <th> DATASET </th> <th> MEAN </th> <th> MEDIAN </th>  </tr>
+  <tr> <td align="right"> 1 </td> <td> ORIGINAL </td> <td align="right"> 10766.19 </td> <td align="right"> 10765.00 </td> </tr>
+  <tr> <td align="right"> 2 </td> <td> IMPUTED </td> <td align="right"> 10766.19 </td> <td align="right"> 10766.19 </td> </tr>
+   </table>
   
 **Impact on median and mean**: negligible, based on above Xtable.  
 
@@ -191,13 +246,11 @@ print(xt, type="html")
 Code chunk below would create new data frame, creating a new column "weekdayorend" , a factor that classifies date as a weekday or weekend.  
 
 
-```{r dayofweek}
 
+```r
 weekenddays<- c("Saturday","Sunday")
 
 activitynewwithweekday<- transform(activitynew,weekdayorend=factor( weekdays(as.POSIXct(activitynew$date, tz="", "%Y-%m-%d")) %in% weekenddays,  levels=c(TRUE, FALSE), labels=c('weekend', 'weekday') ))
-
-
 ```
 
 
@@ -206,11 +259,12 @@ activitynewwithweekday<- transform(activitynew,weekdayorend=factor( weekdays(as.
 1. First group the data by interval and type of weekday, then get the mean per interval for the entire dataset.  
 2. Plot the panel plot, group by weekday or weekend.  
 
-```{r panelplot}
 
+```r
 avgstepsperintervalandday <- select(activitynewwithweekday,-date) %>% group_by(interval, weekdayorend) %>%   summarize_each(funs(mean))
 
 xyplot(avgstepsperintervalandday$steps~ avgstepsperintervalandday$interval | avgstepsperintervalandday$weekdayorend, layout=c(1,2), type='l', xlab="Interval", ylab="Avg number of steps across all days")
-
 ```
+
+![](PA1_template_files/figure-html/panelplot-1.png) 
 
